@@ -60,6 +60,7 @@ rsconnect/
 *.xlsx
 *.docx
 *.txt
+*.pdf
 
 # bibliography files
 *.bib
