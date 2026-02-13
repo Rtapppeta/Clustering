@@ -126,4 +126,3 @@ smooth_full <- cbind(smoothA, smoothB[,-1])
 # then check for cluster overlap between replicates
 
 ?kmeans
-
