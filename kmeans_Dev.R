@@ -1,4 +1,5 @@
 #Developmental Kmeans Elbow Plot
+#final version 
 
 rm(list = ls())
 library(tidymodels)

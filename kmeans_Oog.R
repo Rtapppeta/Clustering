@@ -1,6 +1,5 @@
 #Oogenesis Kmeans Elbow Plot
 
-
 rm(list = ls())
 library(tidymodels)
 library(tidyverse)

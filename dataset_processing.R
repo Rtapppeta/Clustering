@@ -1,6 +1,6 @@
-sapply(c("tidyr", "dplyr", "ggplot2", "ggpubr", "purrr", "readxl", "readr", 
-         "stringr", "edgeR"), FUN = require, character.only = TRUE)
-
+sapply(c("tidyr", "dplyr", "ggplot2", "purrr", "readxl", "readr", 
+         "stringr"), FUN = require, character.only = TRUE)
+#install ggpubr
 #### Reading in datasets ####
 # Imd challenge, Schlamp et al.
 immune_counts <- read_csv("data/normalized_counts_log_filt.csv")
@@ -17,7 +17,7 @@ dev_counts <- list.files(path = file_path,
     return(outdf)
   }) |> purrr::reduce(.f = left_join, by = "gene_name")
 
-# Oogenesis, Tarikere et al.
+# Oogenesis, Tarikere et al.ib
 colnames_oog_counts_GermSoma <- read_tsv("data/Geo_Tarikere/GSE172015_Germ_Soma_table_counts_wide_ctrl.tsv",
                                          n_max = 0, skip = 0) |> colnames()
 oog_counts_GermSoma <- read_tsv("data/Geo_Tarikere/GSE172015_Germ_Soma_table_counts_wide_ctrl.tsv",
