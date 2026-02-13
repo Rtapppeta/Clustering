@@ -1,11 +1,14 @@
 sapply(c("tidyr", "dplyr", "ggplot2", "ggpubr", "purrr", "readxl", "readr", "stringr"), FUN = require,
        character.only = TRUE)
-load("data/ClusteringDev.RData")
+load("data/OogCounts.RData")
+counts_preclust <- counts
+rm(counts)
+load("data/ClusteringOog.RData")
+identical(counts, counts_preclust) # we didn't change the counts at all in the clustering script
 williams <- read_xlsx(path = "data/17Jan2023_Supplemental_File_1.xlsx",
                       sheet = 2, na = "NA") 
 
 #### Pie charts of cluster membership for Immune, Developmental, and Pleiotropic genes ####
-
 clustdf <- left_join(x = clustdf,
                      y = select(williams, FlyBaseID, 
                                 Plei_immuneResponse_embDev,
@@ -40,7 +43,7 @@ p <- ggplot(plotdf, aes(x = factor(1), fill = factor(label))) +
   scale_fill_brewer(palette = "Set1") +
   labs(fill = "Cluster")
 p
-pdf(file = "figures/pies_dev.pdf",
+pdf(file = "figures/pies_oog.pdf",
     width = 5, height = 5)
 p
 dev.off()
@@ -51,21 +54,22 @@ dev.off()
 avgdf <- clustdf |> filter(gene_name %in% robust_cluster_genes) |> 
   left_join(counts, by = "gene_name") |> 
   pivot_longer(cols = colnames(counts)[-1],
-               names_to = "sample_id",
+               names_to = "sample_name",
                values_to = "expr")
 # taking average expression of each cluster in each sample
-avgdf <- avgdf |> group_by(label, sample_id) |> 
+avgdf <- avgdf |> group_by(label, sample_name) |> 
   summarise(avg_expr = mean(expr))
 # taking average of each cluster among replicates of the same hour
 # Taking sample means before the hour mean to speed up computation 
 # (each sample mean came from the same number of genes, 
 # so taking the mean of the 3-4 sample means is
 # equivalent to taking one mean of all genes in all replicates)
-avgdf$replicate <- getReplicate(avgdf$sample_id)
-avgdf$hour <- getHour(avgdf$sample_id)
+avgdf$replicate <- getReplicate(avgdf$sample_name)
+avgdf$hour <- getHour(avgdf$sample_name)
+avgdf$cell_type <- getCellType(avgdf$sample_name)
 # transcripts per million:
 p <- ggplot(avgdf, 
-       aes(x = factor(hour), y = avg_expr)) +
+       aes(x = interaction(hour, cell_type), y = avg_expr)) +
   geom_line(aes(color = factor(label), 
                 group = interaction(label, replicate),
                 linetype = replicate)) +
@@ -81,7 +85,7 @@ p <- ggplot(avgdf,
   facet_wrap(~factor(label))
 p
 # conclusion: no difference in mean cluster expr level here, unlike immune
-pdf("figures/lines_dev.pdf",
+pdf("figures/lines_oog.pdf",
     height = 4, width = 7)
 p
 dev.off()
@@ -93,7 +97,7 @@ scaledf <- avgdf |> group_by(label, replicate) |>
 avgdf <- left_join(avgdf, scaledf, by = c("label", "replicate"))
 avgdf$scaled_expr <- (avgdf$avg_expr - avgdf$mean)/avgdf$sd
 p <- ggplot(avgdf, 
-            aes(x = factor(hour), y = scaled_expr)) +
+            aes(x = interaction(hour, cell_type), y = scaled_expr)) +
   geom_line(aes(color = factor(label), 
                 group = interaction(label, replicate),
                 linetype = replicate)) +
@@ -109,7 +113,7 @@ p <- ggplot(avgdf,
   facet_wrap(~factor(label))
 #theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
 p
-pdf("figures/lines_dev_scaled.pdf",
+pdf("figures/lines_oog_scaled.pdf",
     height = 4, width = 7)
 p
 dev.off()
@@ -131,8 +135,8 @@ p <- ggplot(plotdf, aes(y = cv, x = robust)) +
   geom_text(data = plot_counts, aes(label = n, 
                                     x = robust,
                                     y = 3))
-p # robust have more responsive expression
-pdf("figures/boxes_dev.pdf", width = 7, height = 7)
+p # only really true for immune
+pdf("figures/boxes_oog.pdf", width = 7, height = 7)
 p
 dev.off()
 
@@ -142,7 +146,7 @@ outdf <- clustdf |> filter(robust) |>
   select(gene_name, label, Plei_allImmune_allDev) |> 
   drop_na() |> 
   arrange(Plei_allImmune_allDev, label)
-write_csv(outdf, file = "data/clusters_dev_BLANK.csv", col_names = TRUE)
+write_csv(outdf, file = "data/clusters_oog_BLANK.csv", col_names = TRUE)
 
 # writing table where columns are pleiotropy category,
 # for metascape's multiple gene list feature
@@ -163,9 +167,9 @@ plei_list <- c(plei_list, rep("", times = length(dev_list) - length(plei_list)))
 metascape <- bind_cols("Developmental_Non_Pleiotropic" = dev_list,
                        "Immune_Non_Pleiotropic" = immune_list,
                        "Pleiotropic" = plei_list)
-write_csv(metascape, file = "data/metascape/metascape_dev.csv", col_names = TRUE)
+write_csv(metascape, file = "data/metascape/metascape_oog.csv", col_names = TRUE)
 
-# repeating with the non-robust genes, which presumably don't have as responsive expression
+# repeating with the non-robust genes
 outdf <- clustdf |> filter(!robust) |> 
   select(gene_name, Plei_allImmune_allDev) |> 
   drop_na() |> 
@@ -182,4 +186,4 @@ plei_list <- c(plei_list, rep("", times = length(dev_list) - length(plei_list)))
 metascape <- bind_cols("Developmental_Non_Pleiotropic" = dev_list,
                        "Immune_Non_Pleiotropic" = immune_list,
                        "Pleiotropic" = plei_list)
-write_csv(metascape, file = "data/metascape/metascape_dev_nonRobust.csv", col_names = TRUE)
+write_csv(metascape, file = "data/metascape/metascape_oog_nonRobust.csv", col_names = TRUE)
