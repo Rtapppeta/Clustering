@@ -10,7 +10,6 @@ immune_counts <- counts
 
 set.seed(27)
 immune_points <- immune_counts %>% select(where(is.numeric))
-
 kclusts <- 
   tibble(k = 1:9) %>%
   mutate(

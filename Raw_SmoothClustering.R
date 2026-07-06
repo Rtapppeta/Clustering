@@ -86,7 +86,7 @@ text(pc_smooth[,1], pc_smooth[,2], labels = rownames(means_smooth), pos = 3)
 dev.off()
 
 
-# (C) MATCH SMOOTH clusters to RAW clusters (fix label switching)
+# Match SMOOTH clusters to RAW clusters
 D <- matrix(0, k, k)
 for (i in 1:k) for (j in 1:k) {
   D[i, j] <- sqrt(sum((means_raw[i, ] - means_smooth[j, ])^2))
@@ -120,7 +120,7 @@ match_map <- data.frame(
 write.csv(match_map, "cluster_match_map_df5.csv", row.names = FALSE)
 
 
-# (D) Combined PCA of 6 cluster means (RAW + MATCHED SMOOTH) + lines
+# Combined PCA of 6 cluster means (RAW + MATCHED SMOOTH) + lines
 means_combined <- rbind(means_raw, means_smooth_m)
 
 method <- c(rep("RAW", k), rep("SMOOTH_df5", k))
